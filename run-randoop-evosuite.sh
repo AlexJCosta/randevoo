@@ -4,6 +4,19 @@ PROJECT=$1
 PATH_TO_CLASSES=$2
 TIMEOUT=$3
 SEED=$4
+ALGO=$5
+
+if [[ -z "$PROJECT" || -z "$PATH_TO_CLASSES" || -z "$TIMEOUT" || -z "$SEED" || -z "$ALGO" ]];
+
+then
+    echo "missing variable. please check and set before calling!"
+    echo PROJECT=$PROJECT
+    echo PATH_TO_CLASSES=$PATH_TO_CLASSES
+    echo TIMEOUT=$TIMEOUT
+    echo SEED=$SEED
+    echo ALGO=$ALGO
+    exit
+fi
 
 ## this directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -27,19 +40,42 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
  ## entering maven-generated class directory
  (cd target/classes;
 
-  RANDOOP_DIR=${DIR}/output-tests/randoop-${PROJECT}-`date +%s`
-  mkdir ${RANDOOP_DIR}
+  OUTPUT_DIR=${DIR}/output-tests/${ALGO}-${PROJECT}-`date +%s`
+  mkdir ${OUTPUT_DIR}
 
   ## generating list of classes
   find . -name "*.class" | sed 's/\.class//g' | sed 's/\.\///g' | sed 's/\//./g' > ${CLASSLIST}
-  java -ea -cp .:$CP_DEP_CLASSES:$RANDOOP_JAR \
-       randoop.main.Main gentests \
-       --randomseed=${SEED} \
-       --classlist=${CLASSLIST} \
-       --output-limit=${TIMEOUT} \
-       --junit-output-dir=${RANDOOP_DIR} \
-       --junit-package-name=synapse
 
+  case $ALGO in
+      "randoop")
+          java -ea -cp .:$CP_DEP_CLASSES:$RANDOOP_JAR \
+               randoop.main.Main gentests \
+               --randomseed=${SEED} \
+               --classlist=${CLASSLIST} \
+               --time-limit=${TIMEOUT} \
+               --junit-output-dir=${OUTPUT_DIR} \
+               --junit-package-name=synapse \
+               --flaky-test-behavior="OUTPUT"
+          ;;
+      "evosuite")
+          ## iterating through every class in the project
+          while IFS= read -r file
+          do
+              java -jar ${EVOSUITE_JAR} \
+                   -generateSuite \
+                   -Dsearch_budget=${TIMEOUT} \
+                   -Dstopping_condition=MaxTime \
+                   -class $file \
+                   -projectCP .:$CP_DEP_CLASSES
+          done < "$CLASSLIST"
+          rm $CLASSLIST
+          
+      ;;
+      *)
+          echo "Fatal error. Should not reach this point!"
+          exit 1
+      ;;
+  esac
 
   ## defining some important paths
   JACOCO_DIR=${DIR}/libs/jacoco
@@ -50,7 +86,7 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
   #########
   ## compile randoop-generated tests and produce coverage
   #########
-  (cd ${RANDOOP_DIR};
+  (cd ${OUTPUT_DIR};
 
    ## first, compile tests
    find . -name "*.java" | xargs javac -cp $PROJECT_CLASSES:$CP_DEP_CLASSES -d . 
@@ -70,19 +106,6 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
    awk -F "," 'BEGIN {SUM1=0;SUM2=0}; {SUM1=SUM1+$6;SUM2=SUM2+$7}; END {printf "uncovered=%.3f covered=%.3f coverage=%.3f\n", SUM1, SUM2, 100*SUM2/(SUM1+SUM2)}' jacoco.csv
 
   )
-
-  # ## iterating through every class in the project
-  # while IFS= read -r file
-  # do
-  #     java -jar ${EVOSUITE_JAR} \
-  #          -generateSuite \
-  #          -Dsearch_budget=${TIMEOUT} \
-  #          -Dstopping_condition=MaxTime \
-  #          -class $file \
-  #          -projectCP .:$CP_DEP_CLASSES
-      
-  # done < "$CLASSLIST"
-  # rm $CLASSLIST
   
  )
 
