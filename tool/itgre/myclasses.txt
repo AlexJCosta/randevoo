@@ -1,4 +1,0 @@
-com.pa.analyzer.CurriculoAnalyzer
-com.pa.analyzer.CurriculoResult
-com.pa.analyzer.GroupAnalyzer
-com.pa.analyzer.GroupResult
