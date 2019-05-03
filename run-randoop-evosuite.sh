@@ -58,18 +58,13 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
                --flaky-test-behavior="OUTPUT"
           ;;
       "evosuite")
-          ## iterating through every class in the project
-          while IFS= read -r file
-          do
-              java -jar ${EVOSUITE_JAR} \
-                   -generateSuite \
-                   -Dsearch_budget=${TIMEOUT} \
-                   -Dstopping_condition=MaxTime \
-                   -class $file \
-                   -projectCP .:$CP_DEP_CLASSES
-          done < "$CLASSLIST"
-          rm $CLASSLIST
-          
+          java -jar ${EVOSUITE_JAR} -generateSuite \
+                -target=${PROJECT_CLASSES} \
+		-Dsearch_budget=1 \
+		-Dstopping_condition=MaxTime \
+	
+	  mv ${PROJECT_CLASSES}/evosuite-tests/ ${OUTPUT_DIR} 
+          mv ${PROJECT_CLASSES}/evosuite-report/ ${OUTPUT_DIR}          
       ;;
       *)
           echo "Fatal error. Should not reach this point!"
