@@ -119,7 +119,6 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
           exit 1
       ;;
   esac
-
   
  ) ## leaving ${PROJECT_CLASSES};
  
