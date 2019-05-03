@@ -2,8 +2,9 @@
 
 PROJECT="lattes-analysis"
 PATH_TO_CLASSES="/target/classes"
-TIMEOUT=60
+GLOBAL_TIMEOUT_RANDOOP=30 ## 330
+LOCAL_TIMEOUT_EVOSUITE=1
 SEED=412397
 
-./run-randoop-evosuite.sh ${PROJECT} ${PATH_TO_CLASSES} ${TIMEOUT} ${SEED} "randoop"
-#./run-randoop-evosuite.sh ${PROJECT} ${PATH_TO_CLASSES} ${TIMEOUT} ${SEED} "evosuite"
+./run-randoop-evosuite.sh ${PROJECT} ${PATH_TO_CLASSES} ${GLOBAL_TIMEOUT_RANDOOP} ${LOCAL_TIMEOUT_EVOSUITE} ${SEED} "randoop"
+#./run-randoop-evosuite.sh ${PROJECT} ${PATH_TO_CLASSES} ${GLOBAL_TIMEOUT_RANDOOP} ${LOCAL_TIMEOUT_EVOSUITE} ${SEED} "evosuite"
