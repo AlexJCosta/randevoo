@@ -90,38 +90,45 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
                -target=${PROJECT_CLASSES} \
                -seed=${SEED} \
                -criterion=branch \
-   	       -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
-	       -Dstopping_condition=MaxTime \
+   	         -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+	            -Dstopping_condition=MaxTime \
                -Dno_runtime_dependency=true
           
           #          ) >/dev/null 2>&1
           
           ## Moving tests to output_dir
           mv ${PROJECT_CLASSES}/evosuite-tests/ ${OUTPUT_DIR}  
-
+          
           #########
           ## Compiling, generating list and reading the tests
           #########
           (cd ${OUTPUT_DIR};
-		## first, compile tests
-		find . -name "*.java" | xargs javac -cp ${PROJECT_CLASSES}:$CP_DEP_CLASSES -d .
+		     ## first, compile tests
+		     find . -name "*.java" | xargs javac -cp ${PROJECT_CLASSES}:$CP_DEP_CLASSES -d .
+           
+		     ## generating list of classes
+		     find . -name "*.class" | sed 's/\.class//g' | sed 's/\.\///g' | sed 's/\//./g' > ${CLASSLIST_EVOSUITE}
+           
+		     while IFS= read -r file
+		     do
+			      echo "Reading... $file"
+			      java -cp .:$JUNIT_JARS:$PROJECT_CLASSES:$CP_DEP_CLASSES -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore $file
+               mv jacoco.exec jacoco.exec.$file
+		     done < "$CLASSLIST_EVOSUITE"
+		     rm $CLASSLIST_EVOSUITE
 
-		## generating list of classes
-		find . -name "*.class" | sed 's/\.class//g' | sed 's/\.\///g' | sed 's/\//./g' > ${CLASSLIST_EVOSUITE}
-
-		while IFS= read -r file
-		do
-			echo "Reading... $file"
-			java -cp .:$JUNIT_JARS:$PROJECT_CLASSES:$CP_DEP_CLASSES -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore $file
-		done < "$CLASSLIST_EVOSUITE"
-		rm $CLASSLIST_EVOSUITE                
+           ## merge jacoco.exec files into one and delete the rest
+           covfiles=$(find . -name "jacoco.exec*" | xargs)
+           java -jar $JACOCO_CLI merge $covfiles --destfile jacoco.exec
+           rm $covfiles
+           
           )          
-	;;
-
-	*)
-          echo "Fatal error. Should not reach this point!"
-          exit 1
-	;;
+	       ;;
+      
+	   *)
+       echo "Fatal error. Should not reach this point!"
+       exit 1
+	    ;;
 
  esac
 
