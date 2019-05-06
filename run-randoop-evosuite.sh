@@ -38,6 +38,13 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
  PROJECT_CLASSES=${DIR}/test_programs/${PROJECT}/target/classes
  
  CLASSLIST="${DIR}/list-of-classes.txt"
+ CLASSLIST_EVOSUITE="${DIR}/list-of-classes-EVO.txt"
+
+ ## defining some important paths
+ JACOCO_DIR=${DIR}/libs/jacoco
+ JACOCO_AGENT=${JACOCO_DIR}/jacocoagent.jar
+ JACOCO_CLI=${JACOCO_DIR}/jacococli.jar
+ JUNIT_JARS=${DIR}/libs/junit/hamcrest-core-1.3.jar:${DIR}/libs/junit/junit-4.13-beta-2.jar
 
  ## entering maven-generated class directory
  (cd ${PROJECT_CLASSES};
@@ -58,13 +65,6 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
                --junit-output-dir=${OUTPUT_DIR} \
                --junit-package-name=synapse \
                --flaky-test-behavior="OUTPUT"
-
-
-            ## defining some important paths
-          JACOCO_DIR=${DIR}/libs/jacoco
-          JACOCO_AGENT=${JACOCO_DIR}/jacocoagent.jar
-          JACOCO_CLI=${JACOCO_DIR}/jacococli.jar
-          JUNIT_JARS=${DIR}/libs/junit/hamcrest-core-1.3.jar:${DIR}/libs/junit/junit-4.13-beta-2.jar
           
           #########
           ## compile randoop-generated tests and produce coverage
@@ -79,47 +79,68 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
            #echo "java -cp $JUNIT_JARS:$PROJECT_CLASSES:$CP_DEP_CLASSES -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore synapse.RegressionTest"
            java -cp .:$JUNIT_JARS:$PROJECT_CLASSES:$CP_DEP_CLASSES -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore synapse.RegressionTest
            
-           java -jar $JACOCO_CLI report jacoco.exec \
-                --classfiles $PROJECT_CLASSES \
-                --csv jacoco.csv
-           rm jacoco.exec
-           
-           ## stat
-           awk -F "," '{print $2,$6,$7}' jacoco.csv
-           awk -F "," 'BEGIN {SUM1=0;SUM2=0}; {SUM1=SUM1+$6;SUM2=SUM2+$7}; END {printf "uncovered=%.3f covered=%.3f coverage=%.3f\n", SUM1, SUM2, 100*SUM2/(SUM1+SUM2)}' jacoco.csv
-           
           )
           
           ;;
       
       "evosuite")
-
-          echo "running evosuite for some time (be patient)"
+	echo "running evosuite for some time (be patient)"
           #          (
           java -jar ${EVOSUITE_JAR} -generateSuite \
                -target=${PROJECT_CLASSES} \
                -seed=${SEED} \
-               -criterion=branch -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} -Dstopping_condition=MaxTime
+               -criterion=branch \
+   	       -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+	       -Dstopping_condition=MaxTime \
+               -Dno_runtime_dependency=true
           
           #          ) >/dev/null 2>&1
           
-          (
-              echo "number of classes:" $(grep -ve "TARGET" statistics.csv | wc -l)
-              grep -vE "TARGET" statistics.csv | awk -F "," '{print $1, $3}' > /tmp/aux
-              awk -F " " 'BEGIN {SUM=0}; {SUM=SUM+$2}; END {printf "coverage=%.3f\n", 100*SUM/NR}' /tmp/aux
-          ) > average-cov.txt
-          rm /tmp/aux
-          
-	       mv ${PROJECT_CLASSES}/evosuite-tests/ ${OUTPUT_DIR}
-          mv ${PROJECT_CLASSES}/evosuite-report/ ${OUTPUT_DIR}          
-          ;;
-      
-      *)
+          ## Moving tests to output_dir
+          mv ${PROJECT_CLASSES}/evosuite-tests/ ${OUTPUT_DIR}  
+
+          #########
+          ## Compiling, generating list and reading the tests
+          #########
+          (cd ${OUTPUT_DIR};
+		## first, compile tests
+		find . -name "*.java" | xargs javac -cp ${PROJECT_CLASSES}:$CP_DEP_CLASSES -d .
+
+		## generating list of classes
+		find . -name "*.class" | sed 's/\.class//g' | sed 's/\.\///g' | sed 's/\//./g' > ${CLASSLIST_EVOSUITE}
+
+		while IFS= read -r file
+		do
+			echo "Reading... $file"
+			java -cp .:$JUNIT_JARS:$PROJECT_CLASSES:$CP_DEP_CLASSES -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore $file
+		done < "$CLASSLIST_EVOSUITE"
+		rm $CLASSLIST_EVOSUITE                
+          )          
+	;;
+
+	*)
           echo "Fatal error. Should not reach this point!"
           exit 1
-      ;;
-  esac
+	;;
+
+ esac
+
+	#########
+	## Producing coverage
+	#########
+	(cd ${OUTPUT_DIR};
+
+	java -jar $JACOCO_CLI report jacoco.exec \
+                --classfiles $PROJECT_CLASSES \
+                --csv jacoco.csv
+        rm jacoco.exec   
+		
+	## stat
+	awk -F "," '{print $2,$6,$7}' jacoco.csv
+	awk -F "," 'BEGIN {SUM1=0;SUM2=0}; {SUM1=SUM1+$6;SUM2=SUM2+$7}; END {printf "uncovered=%.3f covered=%.3f coverage=%.3f\n", SUM1, SUM2, 100*SUM2/(SUM1+SUM2)}' jacoco.csv
+
+	) ## leaving ${OUTPUT_DIR};
   
- ) ## leaving ${PROJECT_CLASSES};
+) ## leaving ${PROJECT_CLASSES};
  
 ) ## leaving ${DIR}/test_programs/${PROJECT};
