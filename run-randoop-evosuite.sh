@@ -70,21 +70,15 @@ case $ALGO in
         ;;
     
     "evosuite")
-
-        find $DIR_SF_110/${PROJECT}/evosuite-tests/ -name "*.java" | xargs rm
-
-        while IFS= read -r classfile
-        do
-            java -jar ${EVOSUITE_JAR} -generateSuite \
-                 -class=$classfile \
-                 -target=${PROJECT_JAR} \
-                 -seed=${SEED} \
-                 -criterion=branch \
-   	             -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
-	             -Dstopping_condition=MaxTime \
-                 -Dno_runtime_dependency=true \
-                 -Dshow_progress=false
-        done < "${TOBETESTED}"
+        
+        java -jar ${EVOSUITE_JAR} -generateSuite \
+            -target=${PROJECT_JAR} \
+            -seed=${SEED} \
+            -criterion=branch \
+   	        -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+	        -Dstopping_condition=MaxTime \
+            -Dno_runtime_dependency=true \
+            -Dshow_progress=false
         
         ## Moving tests to output_dir
         mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
