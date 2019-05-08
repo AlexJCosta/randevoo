@@ -28,6 +28,10 @@ EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
 OUTPUT_DIR=${DIR}/output-tests/${ALGO}-${PROJECT}-`date +%s`
 mkdir ${OUTPUT_DIR}
 
+## output directory randoop test suite
+OUTPUT_DIR_RANDOOP_TEST_SUITE=$DIR_SF_110/${PROJECT}
+mkdir ${OUTPUT_DIR_RANDOOP_TEST_SUITE}
+
 ## change directory to project directory
 cd $DIR_SF_110/${PROJECT};
 
@@ -48,7 +52,6 @@ JUNIT_JARS=${DIR}/libs/junit/hamcrest-core-1.3.jar:${DIR}/libs/junit/junit-4.13-
 ## list of files to check coverage
 TOBETESTED=${OUTPUT_DIR}/files_to_test.txt
 grep "${PROJECT}" "$DIR_SF_110/classes.txt" | cut -f2 -d"	" | grep -v -e '^$' > $TOBETESTED
-
 ## entering maven-generated class directory
 
 case $ALGO in
@@ -77,15 +80,47 @@ case $ALGO in
                  -target=${PROJECT_JAR} \
                  -seed=${SEED} \
                  -criterion=branch \
-   	           -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
-	              -Dstopping_condition=MaxTime \
-                 -Dno_runtime_dependency=true
+   	             -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+	             -Dstopping_condition=MaxTime \
+                 -Dno_runtime_dependency=true \
+                 -Dshow_progress=false
         done < "${TOBETESTED}"
         
         ## Moving tests to output_dir
         mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
         
-	     ;;
+	    ;;
+
+    "evosuite-from-randoop")
+
+        ## Running randoop
+        java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR \
+             randoop.main.Main gentests \
+             --classlist=${TOBETESTED} \
+             --randomseed=${SEED} \
+             --time-limit=${GLOBAL_TIMEOUT_RANDOOP} \
+             --junit-output-dir=${OUTPUT_DIR_RANDOOP_TEST_SUITE} \
+             --junit-package-name=synapse \
+             --flaky-test-behavior="OUTPUT"
+
+        ## compiling randoop output tests
+        find . -name "*.java" | xargs javac -cp ${OUTPUT_DIR_RANDOOP_TEST_SUITE}:${JUNIT_JARS}:${PROJECT_JAR} -d .
+       
+        ## Running evosuite from the randoop test suite
+        java -jar ${EVOSUITE_JAR} \
+            -target=${PROJECT_JAR} \
+            -seed=${SEED} \
+            -criterion=branch \
+            -Djunit=synapse.RegressionTest \
+            -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+            -projectCP=${PROJECT_JAR}:${OUTPUT_DIR_RANDOOP_TEST_SUITE} \
+            -Dno_runtime_dependency=true \
+            -Dshow_progress=false
+
+        ## Moving tests to output_dir
+        mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
+
+        ;;
     
 	 *)
         echo "Fatal error. Should not reach this point!"

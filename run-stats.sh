@@ -23,4 +23,7 @@ analyze "randoop"
 echo "EVOSUITE"
 analyze "evosuite"
 
+echo "EVOSUITE FROM RANDOOP"
+analyze "evosuite-from-evosuite"
+
 
