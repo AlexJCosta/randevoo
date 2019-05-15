@@ -6,14 +6,14 @@ repositories {
 
 sourceSets {
   main.java.srcDirs = ['src']
-  main.resources.srcDirs = ['src']
+  main.resources.srcDirs = ['resources']
 }
 
 task fatjar(type: Jar) {
   manifest {
     attributes 'Main-Class': 'Main'
   }
-  baseName = 'all-in-one-jar'
+  baseName = 'evosuite-testprocessor'
   from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
   with jar
 }

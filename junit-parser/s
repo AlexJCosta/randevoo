@@ -1,0 +1,5 @@
+#!/bin/bash
+
+gradle clean fatjar
+
+java -jar build/libs/evosuite-testprocessor.jar Main resources/sample.txt
