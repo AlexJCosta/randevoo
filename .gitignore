@@ -3,3 +3,4 @@ list-of-classes.txt
 **/target
 output-tests
 __old__
+**/.gradle

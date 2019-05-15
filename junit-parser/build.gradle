@@ -1,0 +1,24 @@
+apply plugin: 'java'
+
+repositories {
+  mavenCentral()         
+}
+
+sourceSets {
+  main.java.srcDirs = ['src']
+  main.resources.srcDirs = ['src']
+}
+
+task fatjar(type: Jar) {
+  manifest {
+    attributes 'Main-Class': 'Main'
+  }
+  baseName = 'all-in-one-jar'
+  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+  with jar
+}
+
+dependencies {
+  testCompile 'junit:junit:4.+'
+  compile 'com.google.code.javaparser:javaparser:1.0.11'
+}
