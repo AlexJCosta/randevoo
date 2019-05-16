@@ -30,8 +30,8 @@ OUTPUT_DIR=${DIR}/output-tests/${ALGO}-${PROJECT}-$TIMESTAMP
 mkdir ${OUTPUT_DIR}
 
 ## output directory randoop test suite
-OUTPUT_DIR_RANDOOP_TEST_SUITE=$DIR_SF_110/${PROJECT}
-mkdir ${OUTPUT_DIR_RANDOOP_TEST_SUITE}
+# OUTPUT_DIR_RANDOOP_TEST_SUITE=$DIR_SF_110/${PROJECT}
+# mkdir ${OUTPUT_DIR_RANDOOP_TEST_SUITE}
 
 ## change directory to project directory
 cd $DIR_SF_110/${PROJECT};
@@ -58,7 +58,8 @@ grep "${PROJECT}" "$DIR_SF_110/classes.txt" | cut -f2 -d"	" | grep -v -e '^$' > 
 case $ALGO in
     
     "randoop")
-        
+
+        ## TODO: confirm if we should restrict search to a list of classes 
         java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR \
              randoop.main.Main gentests \
              --classlist=${TOBETESTED} \
@@ -71,7 +72,8 @@ case $ALGO in
         ;;
     
     "evosuite")
-    
+
+        ## delete old test files
         find $DIR_SF_110/${PROJECT}/evosuite-tests/ -name "*.java" | xargs rm
 
         while IFS= read -r classfile
