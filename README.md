@@ -1,1 +1,1 @@
-# testing-cin-re
+# RandEvoo -- Combining Randoop and EvoSuite
