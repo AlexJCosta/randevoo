@@ -12,5 +12,6 @@ PROJECT="1_tullibee"
 
 ./run-randoop-evosuite.sh ${DIR_SF_110} ${PROJECT} $LOCAL_TIMEOUT_EVOSUITE $GLOBAL_TIMEOUT_RANDOOP $SEED evosuite
 ./run-randoop-evosuite.sh ${DIR_SF_110} ${PROJECT} $LOCAL_TIMEOUT_EVOSUITE $GLOBAL_TIMEOUT_RANDOOP $SEED randoop
+./run-randoop-evosuite.sh ${DIR_SF_110} ${PROJECT} $LOCAL_TIMEOUT_EVOSUITE $GLOBAL_TIMEOUT_RANDOOP $SEED randoop+evosuite
 ./run-randoop-evosuite.sh ${DIR_SF_110} ${PROJECT} $LOCAL_TIMEOUT_EVOSUITE $GLOBAL_TIMEOUT_RANDOOP $SEED evosuite-from-randoop
 

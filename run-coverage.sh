@@ -42,14 +42,44 @@ find . -name "*.java" | xargs javac -cp $CP -d .
 
 ## executing tests as to generate jacoco.exec files
 tmp=$(basename $OUTPUT_DIR)
-if [[ $tmp == randoop* ]];
+if [[ $tmp == randoop+evosuite* ]]
 then
+    echo "Running Randoop + EvoSuite tests..."
+    ###################################
+    ## running Randoop + EvoSuite tests
+    ###################################
+
+    ## running Randoop tests
+    java -cp .:$CP -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore synapse.RegressionTest
+    mv jacoco.exec jacoco.exec.$file
+
+    ## running Evosuite tests
+    EVOTESTS="${DIR}/list-of-classes-EVO.txt"          
+    find . -name "*.class" | sed 's/\.class//g' | sed 's/\.\///g' | sed 's/\//./g' > ${EVOTESTS}
+    ## process file
+    while IFS= read -r file
+    do
+	    echo "Reading... $file"
+	    java -cp .:$CP -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore $file
+        mv jacoco.exec jacoco.exec.$file
+    done < "$EVOTESTS"
+    rm $EVOTESTS
+
+    ## merge jacoco.exec files into one and delete the rest
+    covfiles=$(find . -name "jacoco.exec*" | xargs)
+    java -jar $JACOCO_CLI merge $covfiles --destfile jacoco.exec
+    rm $covfiles
+
+elif [[ $tmp == randoop* ]];
+then
+    echo "Running Randoop tests..."
     #########################
     ## running Randoop tests
-    #########################    
+    #########################
     java -cp .:$CP -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore synapse.RegressionTest
-    
+
 else
+    echo "Running EvoSuite tests..."
     #########################
     ## running EvoSuite tests
     #########################    
