@@ -3,6 +3,7 @@ import japa.parser.ast.body.ClassOrInterfaceDeclaration;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.ModifierSet;
 import japa.parser.ast.body.VariableDeclarator;
+import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.ReturnStmt;
@@ -67,6 +68,7 @@ class FactorSubsequencesVisitor extends VoidVisitorAdapter<Void> {
     }
     public void addNodes() {
         for (int i = 0; i < addArg0.size(); i++) {
+            ClassOrInterfaceDeclaration clazz = addArg0.get(i);
             VariableDeclarationExpr n = addArg2.get(i);
             // create new node
             int mods = ModifierSet.addModifier(ModifierSet.PUBLIC, ModifierSet.STATIC);
@@ -76,10 +78,12 @@ class FactorSubsequencesVisitor extends VoidVisitorAdapter<Void> {
             VariableDeclarator vd = list.get(0);
             String name = addArg1.get(i).getName() + "_" + vd.getId().getName();
             MethodDeclaration method = new MethodDeclaration(mods, n.getType(), name);
+            method.setThrows(new ArrayList<NameExpr>());
+            method.getThrows().add(new NameExpr("Throwable"));
             BlockStmt block = new BlockStmt();
             method.setBody(block);
             ASTHelper.addStmt(block, new ReturnStmt(vd.getInit()));
-            ASTHelper.addMember(addArg0.get(i), method);
+            ASTHelper.addMember(clazz, method);
         }                
     }
 

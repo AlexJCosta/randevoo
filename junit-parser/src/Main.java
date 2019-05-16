@@ -9,17 +9,24 @@ import japa.parser.ast.body.ClassOrInterfaceDeclaration;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.ModifierSet;
 import japa.parser.ast.body.TypeDeclaration;
+import japa.parser.ast.expr.MethodCallExpr;
+import japa.parser.ast.expr.NameExpr;
+import japa.parser.ast.stmt.BlockStmt;
+import japa.parser.ast.stmt.ReturnStmt;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Attributes.Name;
 
 public class Main {
 
@@ -41,12 +48,15 @@ public class Main {
         BufferedReader br = new BufferedReader(new FileReader(file));
         String s;
         while ((s = br.readLine())!=null) {
-            CompilationUnit compUnit = refactorEvoSuiteTest(s.trim());
+            s = s.trim();
+            if (s.equals("")) continue;
+            CompilationUnit compUnit = refactorEvoSuiteTest(s);
             units.add(compUnit);
+            saveCompilationUnit(compUnit);
         }
         br.close();
 
-        /** merge each compilation unit and produce single file **/
+        /** merge each compilation unit and produce a single file **/
         //TO CHECK: I am assuming that merging tests from different classes will not result in collision problems
 
         // create new compilation unit and one class/type declaration                                                                                                                                                                                                                                                                                        
@@ -56,20 +66,55 @@ public class Main {
         type.setMembers(new ArrayList<BodyDeclaration>());
         ASTHelper.addTypeDeclaration(compUnit, type);
 
-        // traverse all tests looking for distinct import declarations and methods
-        Set<ImportDeclaration> set = new HashSet<ImportDeclaration>();
+        /**
+         * traverse all tests looking for distinct import declarations and methods. 
+         * 
+         * We can't create a single test with all EvoSuite tests because some tests access 
+         * protected methods and constructors, which are only accessible from classes defined 
+         * in specific packages. Consequently, we need to respect the same package structure.
+         **/
+        int counter = 0;
+        Set<ImportDeclaration> importSet = new HashSet<ImportDeclaration>();
         for (CompilationUnit unit: units) {
-            set.addAll(unit.getImports());
             List<TypeDeclaration> typeDeclarations = unit.getTypes();
             if (typeDeclarations.size() != 1) {
                 throw new RuntimeException("Please check. We assume there was only one type in each test class.");
             }
-            type.getMembers().addAll(typeDeclarations.get(0).getMembers());            
-        }
-        compUnit.setImports(new ArrayList<ImportDeclaration>(set));
+            ClassOrInterfaceDeclaration clazz = (ClassOrInterfaceDeclaration) typeDeclarations.get(0);
+            
+            // add import
+            importSet.addAll(unit.getImports());
+            // import this type
+            String name = unit.getPackage().getName()+"."+clazz.getName();
+            importSet.add(new ImportDeclaration(new NameExpr(name), false, false));
+             
+            for (BodyDeclaration bd : clazz.getMembers()) {
+                MethodDeclaration md = (MethodDeclaration) bd;
+                // creating new method declaration
+                MethodDeclaration newMD = new MethodDeclaration(ModifierSet.PUBLIC, md.getType(), "test" + (++counter));
+                newMD.setThrows(new ArrayList<NameExpr>());
+                newMD.getThrows().add(new NameExpr("Throwable"));
+                BlockStmt body = new BlockStmt();
+                newMD.setBody(body);
+                MethodCallExpr call = new MethodCallExpr(new NameExpr(clazz.getName()), md.getName());
+                ASTHelper.addStmt(body, new ReturnStmt(call));
+                // attaching the new method to the newly created compilation unit
+                type.getMembers().add(newMD);
+            }             
+         }
+        compUnit.setImports(new ArrayList<ImportDeclaration>(importSet));
 
-        System.out.println(compUnit);
+        saveCompilationUnit(compUnit);
 
+    }
+
+    private static void saveCompilationUnit(CompilationUnit compUnit) throws IOException {
+        // save file
+        String fname = compUnit.getTypes().get(0).getName();
+        BufferedWriter bw = new BufferedWriter(new FileWriter(fname+".java"));
+        bw.write(compUnit.toString());
+        bw.close();
+        
     }
 
     private static CompilationUnit refactorEvoSuiteTest(String fileName) throws FileNotFoundException, ParseException, IOException {

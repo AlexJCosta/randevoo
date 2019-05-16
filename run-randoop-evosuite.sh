@@ -25,7 +25,8 @@ RANDOOP_JAR=${DIR}/libs/randoop/randoop-all-4.1.1.jar
 EVOSUITE_JAR=${DIR}/libs/evosuite/evosuite-1.0.6.jar
 
 ## output directory
-OUTPUT_DIR=${DIR}/output-tests/${ALGO}-${PROJECT}-`date +%s`
+TIMESTAMP=`date +%s`
+OUTPUT_DIR=${DIR}/output-tests/${ALGO}-${PROJECT}-$TIMESTAMP
 mkdir ${OUTPUT_DIR}
 
 ## output directory randoop test suite
@@ -72,16 +73,41 @@ case $ALGO in
     "evosuite")
         
         java -jar ${EVOSUITE_JAR} -generateSuite \
-            -target=${PROJECT_JAR} \
-            -seed=${SEED} \
-            -criterion=branch \
-   	        -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
-	        -Dstopping_condition=MaxTime \
-            -Dno_runtime_dependency=true \
-            -Dshow_progress=false
+             -target=${PROJECT_JAR} \
+             -seed=${SEED} \
+             -criterion=branch \
+   	       -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+	          -Dstopping_condition=MaxTime \
+             -Dno_runtime_dependency=true \
+             -Dshow_progress=false
         
         ## Moving tests to output_dir
         mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
+
+
+        ## generating test with all test subsequences
+        tmpfile=/tmp/tests.txt
+        (cd ${OUTPUT_DIR};
+         ## create file with list of paths to test files
+         echo >$tmpfile # clear file
+         for x in `find . -name "*.java" | sed 's/\.\///g' | grep -vE "ToRandoop"`
+         do
+             echo ${OUTPUT_DIR}/$x >>$tmpfile ## append to file
+         done
+        )
+        ## build evosuite processor (fast)
+        (cd ${DIR}/junit-parser;
+         gradle clean fatjar
+        )
+        SUBDIR=${OUTPUT_DIR}-sub
+        mkdir -p $SUBDIR
+        (cd $SUBDIR;
+         ## generate file!
+         java -jar ${DIR}/junit-parser/build/libs/evosuite-testprocessor.jar Main $tmpfile
+         ## compile
+         CP=${PROJECT_CLASSPATH}:${JUNIT_JARS}:${EVOSUITE_JAR}
+         find . -name "*.java" | xargs javac -cp $CP -d .
+        )
         
 	    ;;
 
