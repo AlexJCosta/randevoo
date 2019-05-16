@@ -70,6 +70,7 @@ case $ALGO in
         ;;
     
     "evosuite")
+    
         find $DIR_SF_110/${PROJECT}/evosuite-tests/ -name "*.java" | xargs rm
 
         while IFS= read -r classfile
@@ -89,6 +90,37 @@ case $ALGO in
         mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
         
 	    ;;
+    
+    "randoop+evosuite")
+
+        java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR \
+             randoop.main.Main gentests \
+             --classlist=${TOBETESTED} \
+             --randomseed=${SEED} \
+             --time-limit=${GLOBAL_TIMEOUT_RANDOOP} \
+             --junit-output-dir=${OUTPUT_DIR} \
+             --junit-package-name=synapse \
+             --flaky-test-behavior="OUTPUT"
+
+        find $DIR_SF_110/${PROJECT}/evosuite-tests/ -name "*.java" | xargs rm
+
+        while IFS= read -r classfile
+        do
+            java -jar ${EVOSUITE_JAR} -generateSuite \
+                 -class=$classfile \
+                 -target=${PROJECT_JAR} \
+                 -seed=${SEED} \
+                 -criterion=branch \
+                 -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
+                 -Dstopping_condition=MaxTime \
+                 -Dno_runtime_dependency=true \
+                 -Dshow_progress=false
+        done < "${TOBETESTED}"
+
+        ## Moving tests to output_dir
+        mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
+
+        ;;
 
     "evosuite-from-randoop")
 

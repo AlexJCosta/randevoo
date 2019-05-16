@@ -3,7 +3,7 @@
 PROJECT=$1
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-NUM_REPEATS=3
+NUM_REPEATS=10
 
 function analyze() {
     ALGO=$1
@@ -23,7 +23,8 @@ analyze "randoop"
 echo "EVOSUITE"
 analyze "evosuite"
 
+echo "RANDOOP + EVOSUITE"
+analyze "randoop+evosuite"
+
 echo "EVOSUITE FROM RANDOOP"
 analyze "evosuite-from-evosuite"
-
-
