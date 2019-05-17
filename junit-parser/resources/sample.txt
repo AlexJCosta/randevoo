@@ -1,2 +1,2 @@
-/home/damorim/projects/testing-cin-re/junit-parser/resources/EWrapperMsgGenerator_ESTest.java
-/home/damorim/projects/testing-cin-re/junit-parser/resources/TickType_ESTest.java
+/home/damorim/projects/randevoo/junit-parser/resources/EWrapperMsgGenerator_ESTest.java
+/home/damorim/projects/randevoo/junit-parser/resources/TickType_ESTest.java
