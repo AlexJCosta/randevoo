@@ -70,6 +70,10 @@ case $ALGO in
              --junit-output-dir=${OUTPUT_DIR} \
              --junit-package-name=synapse \
              --flaky-test-behavior="OUTPUT"
+
+       (cd $DIR;
+        ./run-coverage.sh ${OUTPUT_DIR} ${PROJECT} ${DIR_SF_110}
+        )
         
         ;;
     
@@ -94,6 +98,18 @@ case $ALGO in
         ## Moving tests to output_dir
         mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
 
+        (cd $DIR;
+         ./run-coverage.sh ${OUTPUT_DIR} ${PROJECT} ${DIR_SF_110}
+        )
+
+        ##################################################
+        # preparing to run randoop after evosuite
+        #
+        #  (1) create factory methods for every subsequence
+        #  (2) compile
+        #  (3) run randoop considering those subsequences as regular files
+        #  (4) compute coverage
+        ##################################################
         ## generating test with all test subsequences
         tmpfile=/tmp/tests.txt
         (cd ${OUTPUT_DIR};
@@ -134,6 +150,8 @@ case $ALGO in
     
     "randoop+evosuite")
 
+        # TODO: This is copy-and-paste from avove code. Consider revising it.
+
         java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR \
              randoop.main.Main gentests \
              --classlist=${TOBETESTED} \
@@ -161,6 +179,11 @@ case $ALGO in
         ## Moving tests to output_dir
         mv $DIR_SF_110/${PROJECT}/evosuite-tests/ ${OUTPUT_DIR}
 
+
+        (cd $DIR;
+         ./run-coverage.sh ${OUTPUT_DIR} ${PROJECT} ${DIR_SF_110}
+        )
+        
         ;;
 
     
@@ -171,5 +194,3 @@ case $ALGO in
     
 esac
 
-cd $DIR
-./run-coverage.sh ${OUTPUT_DIR} ${PROJECT} ${DIR_SF_110}

@@ -59,8 +59,18 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                     }
                     String type = varTypes.get(name);
                     if (type == null) {
-                        System.out.println(exp);
-                        throw new RuntimeException("Please, check this...");
+                        /***** Unusual case. Probably a chained method call. Trying to rescue...HACK!!!! ******/
+                        for (String var: varTypes.keySet()) {
+                            if (name.contains(var)) {
+                                name = var;
+                                type = varTypes.get(name);
+                                break;
+                            }
+                        }
+                        if (type == null) {
+                            System.out.println(exp);
+                            throw new RuntimeException("Please, check this...");
+                        }
                     }
                     String closing = exp.toString() + "; \n return " + name + ";";
                     String s = String.format(TEMPLATE, type, n.getName(), counter, prefix.toString(), closing);
