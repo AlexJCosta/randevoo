@@ -146,7 +146,24 @@ case $ALGO in
              --junit-output-dir=${OUTPUT_DIR} \
              --junit-package-name=synapse \
              --flaky-test-behavior="OUTPUT"
-	    ;;
+
+        
+        #########################
+        ## jacoco csv
+        #########################
+        (cd ${OUTPUT_DIR};
+            ## compile all tests
+            CP=.:$PROJECT_JAR:$RANDOOP_JAR:${EVOSUITE_JAR}:${SUBDIR}:${PROJECT_CLASSPATH}:${JUNIT_JARS}:${EVOSUITE_JAR}
+            find . -name "*.java" | xargs javac -cp $CP -d .
+            java -cp ${CP} -javaagent:${JACOCO_AGENT} org.junit.runner.JUnitCore synapse.RegressionTest
+            java -jar $JACOCO_CLI report jacoco.exec \
+                 --classfiles ${PROJECT_CLASSPATH} \
+                 --csv jacoco.csv
+            rm jacoco.exec   
+
+        )
+                
+	     ;;
     
     "randoop+evosuite")
 
