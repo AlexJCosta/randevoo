@@ -138,6 +138,7 @@ case $ALGO in
         echo "fromevosuite.ToRandoop" >> $TOBETESTED
         OUTPUT_DIR=${DIR}/output-tests/randoop_after_evosuite-${PROJECT}-$TIMESTAMP
         mkdir -p $OUTPUT_DIR
+        cp $TOBETESTED $OUTPUT_DIR
         java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR:${EVOSUITE_JAR}:${SUBDIR} \
              randoop.main.Main gentests \
              --classlist=${TOBETESTED} \
@@ -160,7 +161,6 @@ case $ALGO in
                  --classfiles ${PROJECT_CLASSPATH} \
                  --csv jacoco.csv
             rm jacoco.exec   
-
         )
                 
 	     ;;
