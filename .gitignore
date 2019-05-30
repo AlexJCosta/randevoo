@@ -4,3 +4,4 @@ list-of-classes.txt
 output-tests
 __old__
 **/.gradle
+.DS_Store

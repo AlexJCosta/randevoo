@@ -77,7 +77,10 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                             //throw new RuntimeException("Please, check this...");
                         }
                     }
-                    String closing = exp.toString() + "; \n return " + name + ";";
+                    String closing = exp.toString() + "; ";
+                    if (!type.equals("void")) {
+                    	closing = "\n return " + name + ";";
+                    }
                     String s = String.format(TEMPLATE, type, n.getName(), counter, prefix.toString(), closing);
                     seqs.append(s);
                     prefix.append(exp.toString()+ ";\n");
