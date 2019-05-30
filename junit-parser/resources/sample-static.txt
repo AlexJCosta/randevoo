@@ -1,0 +1,2 @@
+/Users/leopoldomt/Documents/cin/students/alex/randevoo/junit-parser/resources/Query_ESTest.java
+/Users/leopoldomt/Documents/cin/students/alex/randevoo/junit-parser/resources/Product_ESTest.java
