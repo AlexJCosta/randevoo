@@ -50,9 +50,13 @@ JACOCO_AGENT=${JACOCO_DIR}/jacocoagent.jar
 JACOCO_CLI=${JACOCO_DIR}/jacococli.jar
 JUNIT_JARS=${DIR}/libs/junit/hamcrest-core-1.3.jar:${DIR}/libs/junit/junit-4.13-beta-2.jar
 
-## list of files to check coverage
+## list of files to check coverage (Evosuite SF110)
 TOBETESTED=${OUTPUT_DIR}/files_to_test.txt
 grep "${PROJECT}" "$DIR_SF_110/classes.txt" | cut -f2 -d"	" | grep -v -e '^$' > $TOBETESTED
+## Entire list of files in a particular project, for use with Randoop
+TOBETESTED_RANDOOP=${OUTPUT_DIR}/files_to_test_randoop.txt
+jar tf ${PROJECT_JAR} | grep .class | sed 's/.class//g'| sed 's/\//./g' >>$TOBETESTED_RANDOOP
+
 ## entering maven-generated class directory
 
 case $ALGO in
@@ -64,7 +68,7 @@ case $ALGO in
         #################################################################
         java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR \
              randoop.main.Main gentests \
-             --classlist=${TOBETESTED} \
+             --classlist=${TOBETESTED_RANDOOP} \
              --randomseed=${SEED} \
              --time-limit=${GLOBAL_TIMEOUT_RANDOOP} \
              --junit-output-dir=${OUTPUT_DIR} \
@@ -135,13 +139,13 @@ case $ALGO in
         )
 
         ## calling randoop
-        echo "fromevosuite.ToRandoop" >> $TOBETESTED
+        echo "fromevosuite.ToRandoop" >> $TOBETESTED_RANDOOP
         OUTPUT_DIR=${DIR}/output-tests/randoop_after_evosuite-${PROJECT}-$TIMESTAMP
         mkdir -p $OUTPUT_DIR
-        cp $TOBETESTED $OUTPUT_DIR
+        cp $TOBETESTED_RANDOOP $OUTPUT_DIR
         java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR:${EVOSUITE_JAR}:${SUBDIR} \
              randoop.main.Main gentests \
-             --classlist=${TOBETESTED} \
+             --classlist=${TOBETESTED_RANDOOP} \
              --randomseed=${SEED} \
              --time-limit=${GLOBAL_TIMEOUT_RANDOOP} \
              --junit-output-dir=${OUTPUT_DIR} \
@@ -171,7 +175,7 @@ case $ALGO in
 
         java -ea -cp .:$PROJECT_JAR:$RANDOOP_JAR \
              randoop.main.Main gentests \
-             --classlist=${TOBETESTED} \
+             --classlist=${TOBETESTED_RANDOOP} \
              --randomseed=${SEED} \
              --time-limit=${GLOBAL_TIMEOUT_RANDOOP} \
              --junit-output-dir=${OUTPUT_DIR} \

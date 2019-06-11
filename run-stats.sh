@@ -24,8 +24,8 @@ analyze "evosuite"
 echo "RANDOOP AFTER EVOSUITE"
 analyze "randoop_after_evosuite"
 
-# echo "RANDOOP + EVOSUITE"
-# analyze "randoop+evosuite"
+echo "RANDOOP + EVOSUITE"
+analyze "randoop+evosuite"
 
 # echo "EVOSUITE FROM RANDOOP"
 # analyze "evosuite-from-evosuite"
