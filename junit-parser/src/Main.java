@@ -106,7 +106,11 @@ public class Main {
                 BlockStmt body = new BlockStmt();
                 newMD.setBody(body);
                 MethodCallExpr call = new MethodCallExpr(new NameExpr(clazz.getName()), md.getName());
-                ASTHelper.addStmt(body, new ReturnStmt(call));
+                if (md.getType().toString().equals("void")) {
+                	ASTHelper.addStmt(body, call);
+                }else {
+                	ASTHelper.addStmt(body, new ReturnStmt(call));
+                }
                 // attaching the new method to the newly created compilation unit
                 type.getMembers().add(newMD);
             }
