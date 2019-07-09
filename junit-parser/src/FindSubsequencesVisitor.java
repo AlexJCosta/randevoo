@@ -109,6 +109,8 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                 //TODO: doing nothing; check if it would help
             } else if (stmt instanceof TryStmt) {
                 //TODO: doing nothing; check if it would help
+            } else if (stmt instanceof ReturnStmt) {
+                //TODO: doing nothing; check if it would help
             } else {
                 System.out.println(stmt);
                 System.out.println(stmt.getClass());
