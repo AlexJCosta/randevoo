@@ -53,9 +53,15 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                     } else {
                         AssignExpr ase = (AssignExpr) exp;
                         Expression e = ase.getTarget();
-                        if (!(e instanceof FieldAccessExpr)) throw new RuntimeException("Please, check this...");
-                        FieldAccessExpr fae = (FieldAccessExpr) e;
-                        name = fae.getScope().toString();
+                        if (e instanceof FieldAccessExpr) {
+                        	FieldAccessExpr fae = (FieldAccessExpr) e;
+                        	name = fae.getScope().toString();
+                        }else if (e instanceof ArrayAccessExpr) {
+                        	ArrayAccessExpr fae = (ArrayAccessExpr) e;
+                        	name = fae.getName().toString();
+                        }else {
+                        	throw new RuntimeException("Please, check this...");
+                        }
                     }
                     String type = varTypes.get(name);
                     if (type == null) {
