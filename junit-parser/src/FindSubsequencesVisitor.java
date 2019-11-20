@@ -1,31 +1,40 @@
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import japa.parser.ast.CompilationUnit;
+import japa.parser.ast.ImportDeclaration;
 import japa.parser.ast.body.ClassOrInterfaceDeclaration;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.VariableDeclarator;
+import japa.parser.ast.expr.ArrayAccessExpr;
 import japa.parser.ast.expr.AssignExpr;
 import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.FieldAccessExpr;
 import japa.parser.ast.expr.MethodCallExpr;
+import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.AssertStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
+import japa.parser.ast.stmt.ReturnStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.TryStmt;
 import japa.parser.ast.visitor.VoidVisitorAdapter;
 
 class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
-
+	
     public StringBuffer seqs = new StringBuffer();
 
     ClassOrInterfaceDeclaration now_ClassOrInterfaceDeclaration;
     MethodDeclaration now_MethodDeclaration;
     boolean within = false;
     
+    //added boy allex
+	public List<ImportDeclaration> imports;
+    
     @Override
     public void visit(ClassOrInterfaceDeclaration n, Void v) {
-        now_ClassOrInterfaceDeclaration = n;
+        now_ClassOrInterfaceDeclaration = n;         
         super.visit(n, v);
     }
     
@@ -38,9 +47,15 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
         int counter = 0; // reset                      
         StringBuffer prefix = new StringBuffer();
         Map<String, String> varTypes = new HashMap<String,String>();
+        
+       // System.out.println(n.getBody().getStmts());
+        
         for (Statement stmt : n.getBody().getStmts()) {
             if (stmt instanceof ExpressionStmt) {
                 Expression exp = ((ExpressionStmt) stmt).getExpression();
+                
+         //       System.out.println(exp);
+                
                 if (exp instanceof MethodCallExpr || exp instanceof AssignExpr) { // a.m();
                     String name;
                     if (exp instanceof MethodCallExpr) {
@@ -77,7 +92,7 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                         	//Static void call
                         	//TODO: check if omitting the exception does not cause other kinds of problems
                         	type = "void";
-                            //System.out.println(name);
+                            //System.out.println("Type void: " + name);
                             //System.out.println(exp);
                             //System.out.println(prefix);
                             //throw new RuntimeException("Please, check this...");
@@ -87,7 +102,26 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                     if (!type.equals("void")) {
                     	closing = "\n return " + name + ";";
                     }
-                    String s = String.format(TEMPLATE, type, n.getName(), counter, prefix.toString(), closing);
+                    System.out.println(n.getType().toString());
+                    
+                    //added by alex
+                    String canonicalImport = "void";
+                    for (ImportDeclaration i : imports) {
+                    	System.out.println("now-> " + type);
+                    	System.out.println(i.toString());
+                    	System.out.println(i.getName().getName());
+                    	if (type.equals(i.getName().getName())) {
+                    		canonicalImport = i.getName().toString();
+                    	}
+                    }
+                    
+                    String s = "";
+                    if (canonicalImport.equals("void")) {
+                    	s = String.format(TEMPLATE, type, n.getName(), counter, prefix.toString(), closing);
+                    }else {
+                    	s = String.format(TEMPLATE, canonicalImport, n.getName(), counter, prefix.toString(), closing);
+                    }
+                    
                     seqs.append(s);
                     prefix.append(exp.toString()+ ";\n");
                     counter++;
@@ -96,13 +130,33 @@ class FindSubsequencesVisitor extends VoidVisitorAdapter<Void> {
                     if (vde.getVars().size() != 1) throw new RuntimeException("Please, check this...");
                     VariableDeclarator vd = (VariableDeclarator) vde.getVars().get(0);
                     varTypes.put(vd.getId().toString(), vde.getType().toString());
+                    
                     // sequences
-                    String s = String.format(TEMPLATE, vde.getType().toString(), n.getName(), counter, prefix.toString(), "return " + vd.getInit() + ";");
-                    seqs.append(s);
-                    prefix.append(exp.toString() + ";\n");
-                    counter++;
+                    //added by alex
+                    String canonicalImport = vde.getType().toString();
+                    boolean key = false;
+                    for (ImportDeclaration i : imports) {
+                    	System.out.println("now-> " + vde.getType().toString());
+                    	System.out.println(i.toString());
+                    	System.out.println(i.getName().getName());
+                    	if (vde.getType().toString().equals(i.getName().getName())) {
+                    		canonicalImport = i.getName().toString();
+                    		key = true;
+                    	}
+                    }
+                    
+                    System.out.println(n);
+                    // added by alex
+                    //if (key) {
+	                    String s = String.format(TEMPLATE, canonicalImport, n.getName(), counter, prefix.toString(), "return " + vd.getInit() + ";");
+	                    //String s = String.format(TEMPLATE, vde.getType().toString(), n.getName(), counter, prefix.toString(), "return " + vd.getInit() + ";");
+	                    System.out.println(s);
+	                    seqs.append(s);
+	                    prefix.append(exp.toString() + ";\n");
+	                    counter++;
+                    //}
                 } else {
-                    System.out.println(exp.getClass());
+                    //System.out.println(exp.getClass());
                     throw new RuntimeException("Please, check this...");                    
                 }
             } else if (stmt instanceof AssertStmt) {
