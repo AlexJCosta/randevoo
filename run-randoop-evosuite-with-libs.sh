@@ -55,6 +55,7 @@ grep "${PROJECT}" "$DIR_SF_110/classes.txt" | cut -f2 -d"	" | grep -v -e '^$' > 
 case $ALGO in
     
     "randoop")
+	echo "---> "$SOURCE
         DIR_RANDOOP=${DIR}/output-tests/randoop-${PROJECT}-$TIMESTAMP
         mkdir ${DIR_RANDOOP}
         
@@ -89,6 +90,7 @@ case $ALGO in
                  -class=$classfile \
                  -target=${PROJECT_JAR} \
                  -seed=${SEED} \
+                 -projectCP=${SOURCE} \
                  -criterion=branch \
                  -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
                  -Dstopping_condition=MaxTime \
@@ -129,7 +131,7 @@ case $ALGO in
         mkdir -p $SUBDIR
         (cd $SUBDIR;
          ## generate file!
-         java -jar ${DIR}/junit-parser/build/libs/evosuite-testprocessor.jar Main $tmpfile "$DIR_SF_110/${PROJECT}/$PROJECT_JAR"
+         java -jar ${DIR}/junit-parser/build/libs/evosuite-testprocessor.jar Main $tmpfile $SOURCE"$DIR_SF_110/${PROJECT}/$PROJECT_JAR"
          
 	 echo "### COMPILING THIS FACTORY TESTS ###"
          ## compile
@@ -177,7 +179,7 @@ case $ALGO in
             rm jacoco.exec   
         )
                 
-	;;
+	     ;;
     
     "randoop+evosuite")
 
@@ -207,6 +209,7 @@ case $ALGO in
                  -class=$classfile \
                  -target=${PROJECT_JAR} \
                  -seed=${SEED} \
+                 -projectCP=${SOURCE} \
                  -criterion=branch \
                  -Dsearch_budget=${LOCAL_TIMEOUT_EVOSUITE} \
                  -Dstopping_condition=MaxTime \
@@ -228,7 +231,7 @@ case $ALGO in
 	 *)
         echo "Fatal error. Should not reach this point!"
         exit 1
-	;;
+	     ;;
     
 esac
 
